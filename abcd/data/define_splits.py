@@ -3,9 +3,8 @@
 All subjects for which there are resting state fMRI connectivity scores
 are divided into the site of acquisition. Each of the 22 sites is further 
 divided into five splits, keeping siblings together.
-
-
 """
+
 import random
 from tqdm import tqdm
 import abcd.utils.io as io
@@ -30,8 +29,8 @@ def inter_site_splits(subjects_df, k=3, seed=0):
     Parameters:
         subjects_df (pandas.DataFrame): Subjects dataframe
     Returns:
-        site_splits ({str -> {int -> [str]}}): A dictionary linking each site ID to a k-item long 
-        dict linking a split ID to a subject ID list
+        site_splits ({str -> {str -> [str]}}): A dictionary linking each site ID to a k-item long 
+            dict linking a split ID to a subject ID list
     '''
     random.seed(seed)
     site_splits = dict()
