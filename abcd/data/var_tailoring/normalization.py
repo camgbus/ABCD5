@@ -16,7 +16,7 @@ def normalize_var(df, y, y_new_name, norm=False):
     # Ensure no missing values
     assert df[y].isna().sum() == 0
     if norm == True:
-        df[y_new_name] = (df-df.mean())/df.std()
+        df[y_new_name] = (df[y]-df[y].mean())/df[y].std()
     else:
-        df[y_new_name] = (df-df.min())/(df.max()-df.min())
+        df[y_new_name] = (df[y]-df[y].min())/(df[y].max()-df[y].min())
     return df
