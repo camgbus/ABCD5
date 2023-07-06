@@ -1,7 +1,7 @@
 """Different plot examples generated with pygal
 """
 import pygal
-from abcd.data.var_tailoring.discretization import boundaries_by_frequency
+from abcd.data.var_tailoring.discretization import boundaries_by_frequency, boundaries_by_range
 
 def pyramid_histogram(df, y, hue, nr_bins = 5, title = None):
     '''Generate a pyramid plot with the distribution of a variable, grouped according to another.
@@ -16,7 +16,7 @@ def pyramid_histogram(df, y, hue, nr_bins = 5, title = None):
         plot (pygal.graph.pyramid.Pyramid): A pygal pyramid plot
     '''
     # Calculate boundaries dividing the y values
-    boundaries = boundaries_by_frequency(list(df[y]), nr_bins)
+    boundaries = boundaries_by_range(list(df[y]), nr_bins)
     boundaries[-1] += 1
     
     # Divide df based on the categorical variable
