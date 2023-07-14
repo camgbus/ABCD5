@@ -18,3 +18,6 @@ NETWORKS = OrderedDict([("ad","auditory"),
 # All connection columns have the shape rsfmri_c_ngd_<Network A>_ngd_<Network B>
 CONNECTIONS = ["rsfmri_c_ngd_{}_ngd_{}".format(n1, n2) for (n1, n2) in 
                product(NETWORKS.keys(), NETWORKS.keys())]
+
+NAMED_CONNECTIONS = {"rsfmri_c_ngd_{}_ngd_{}".format(n1, n2): "{}-{}".format(n1, n2) for (n1, n2) in 
+               product(NETWORKS.keys(), NETWORKS.keys())}

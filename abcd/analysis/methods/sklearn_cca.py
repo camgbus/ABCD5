@@ -24,8 +24,8 @@ def fit_cca(df, feature_columns, target_columns, nr_components=0):
     for dim in range(nr_components):
         cc_x = X_trans[:, dim]
         cc_y = Y_trans[:, dim]
-        df["CC{}_X".format(dim)] = cc_x
-        df["CC{}_Y".format(dim)] = cc_y
+        df["CC{}_X".format(dim+1)] = cc_x
+        df["CC{}_Y".format(dim+1)] = cc_y
         corr = np.corrcoef(cc_x, cc_y)[0][1]
-        print("Covariate on dimension {0} has correlation {1:.2f}".format(dim, corr))
+        print("Covariate on dimension {0} has correlation {1:.2f}".format(dim+1, corr))
     return cca_model, df
