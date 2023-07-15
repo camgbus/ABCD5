@@ -1,9 +1,9 @@
 import os
 
-def save(plot, path, file_name):
+def save(plot, path, file_name, ending='.svg'):
     '''Save plot as an svg file.'''
-    if ".svg" not in file_name:
-        file_name = file_name+".svg"
+    if ending not in file_name:
+        file_name = file_name+ending
         
     plot.savefig(os.path.join(path, file_name), facecolor='w', bbox_inches="tight", dpi = 300)
 

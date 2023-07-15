@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 
-def plot_correlations(df, columns, method='pearson'):
+def plot_correlations(df, columns, method='pearson', figsize=(10,8), annot=True):
     '''Plot symmetric correlations as a Seaborn Heatmap.'''
     
     df = df[columns].copy()
@@ -16,7 +16,7 @@ def plot_correlations(df, columns, method='pearson'):
     corr_matrix = corr_matrix.where(np.tril(np.ones(corr_matrix.shape)).astype(bool))
     
     # Plot heatmap
-    plt.figure(figsize=(10,8))
-    sns.heatmap(corr_matrix, cmap="mako", annot=True, fmt='.1g')
+    plt.figure(figsize=figsize)
+    sns.heatmap(corr_matrix, cmap="mako", fmt='.1g', annot=annot)
     plt.tight_layout()
     return plt

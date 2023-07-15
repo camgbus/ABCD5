@@ -21,10 +21,10 @@ def plot_cca_rotations(cca_model, x_vars, y_vars, x_component=0, y_component=1,
     include_vars = all_vars
 
   plt.figure(figsize=(12, 12))
-  plt.xlim((-1,1))
-  plt.ylim((-1,1))
+  plt.xlim((-0.5,0.5))
+  plt.ylim((-0.5,0.5))
   ax = plt.gca()
-  for grid_circle_rad in [1, 0.75, 0.5, 0.25]:
+  for grid_circle_rad in [0.5, 0.4, 0.3, 0.2, 0.1]:
     circle = plt.Circle((0, 0), grid_circle_rad, facecolor='white', edgecolor='gray')
     ax.add_patch(circle)
 
