@@ -18,10 +18,10 @@ def dump_df(df, path, file_name=None, sep=','):
     path = _get_full_path(path, file_name, ending='.csv')
     df.to_csv(path, sep=sep, index=False)
     
-def load_df(path, file_name=None, sep=','):
+def load_df(path, file_name=None, sep=',', cols=None):
     ''''Loads a df into a csv file'''
     path = _get_full_path(path, file_name, ending='.csv')
-    df = pd.read_csv(path, sep=sep)
+    df = pd.read_csv(path, sep=sep, usecols=cols)
     assert df is not None
     return df
 

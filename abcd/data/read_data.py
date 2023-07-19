@@ -95,8 +95,7 @@ def add_event_vars(events_df, table_path, vars=[]):
     Returns:
         events_df (pandas.DataFrame)
     '''
-    new_df = io.load_df(table_path, sep =',')
-    new_df = new_df[["src_subject_id", "eventname"]+vars]
+    new_df = io.load_df(table_path, sep =',', cols=["src_subject_id", "eventname"]+vars)
     new_events_df = pd.merge(events_df, new_df, on=["src_subject_id", "eventname"])
     return new_events_df
 
