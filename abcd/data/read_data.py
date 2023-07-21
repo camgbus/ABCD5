@@ -6,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 import abcd.utils.io as io
 from abcd.local.paths import core_path, output_path
-from abcd.data.NETWORKS import CONNECTIONS
+from abcd.data.VARS import CONNECTIONS
 
 def get_subjects_events():
     '''Fetches subjects for which there are resting state fMRI connectivity scores, info. on the sex

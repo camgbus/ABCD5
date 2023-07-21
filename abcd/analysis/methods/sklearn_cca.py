@@ -29,3 +29,21 @@ def fit_cca(df, feature_columns, target_columns, nr_components=0):
         corr = np.corrcoef(cc_x, cc_y)[0][1]
         print("Covariate on dimension {0} has correlation {1:.2f}".format(dim+1, corr))
     return cca_model, df
+
+def add_cca_covariates(df, cca_model, feature_columns, target_columns, nr_components=0):
+    
+    if not nr_components:
+        nr_components = min(len(feature_columns), len(target_columns))
+        
+    X = df[feature_columns]
+    Y = df[target_columns]
+
+    # Add canonical covariates to the data frame
+    X_trans, Y_trans = cca_model.transform(X, Y)
+    for dim in range(nr_components):
+        cc_x = X_trans[:, dim]
+        cc_y = Y_trans[:, dim]
+        df["CC{}_X".format(dim+1)] = cc_x
+        df["CC{}_Y".format(dim+1)] = cc_y
+        corr = np.corrcoef(cc_x, cc_y)[0][1]
+        print("Covariate on dimension {0} has correlation {1:.2f}".format(dim+1, corr))
