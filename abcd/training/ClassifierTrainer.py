@@ -60,4 +60,3 @@ class ClassifierTrainer(Trainer):
             os.makedirs(path)
         save(plot, path, file_name=file_name)
         plot.close()
-        

@@ -10,9 +10,11 @@ from abcd.plotting.pygal.rendering import save
 
 class Trainer():
     def __init__(self, trainer_path, device, optimizer, loss_f, metrics=None):
-        if not os.path.exists(trainer_path):
-            os.makedirs(trainer_path)
         self.trainer_path = trainer_path
+        self.states_path = os.path.join(self.trainer_path, 'states')
+        if not os.path.exists(self.states_path):
+            os.makedirs(self.states_path)
+        self.name = self.__class__.__name__
         self.device = device
         self.optimizer = optimizer
         self.loss_f = loss_f
@@ -34,9 +36,10 @@ class Trainer():
             self.loss_trajectory, self.progress = [], []
         else:
             model.restore(state_name="epoch{}".format(starting_from_epoch))
-            #load_df(self.trainer_path, file_name='progress')
-            #load_df(self.trainer_path, file_name='loss_trajectory')
-        # Run training, toring intermediate progress
+            self.restore(state_name="epoch{}".format(starting_from_epoch))
+            self.loss_trajectory = list(filter(lambda x: x[0] < starting_from_epoch, self.loss_trajectory))
+            self.progress = list(filter(lambda x: x[0] < starting_from_epoch, self.progress))
+        # Run training, storing intermediate progress
         for t in tqdm(range(starting_from_epoch, starting_from_epoch+nr_epochs)):
             # Run evaluation before executing the epoch
             if t % eval_every == 0:
@@ -90,6 +93,7 @@ class Trainer():
     def export(self, model, state_name, verbose=False):
         '''Saves the model state, exports results until this point (as a csv) and updates plots'''
         model.save(state_name=state_name, verbose=verbose)
+        self.save(state_name=state_name, verbose=verbose)
         progress_df = pd.DataFrame(self.progress, columns = ['Epoch', 'Dataset'] + self.metrics)
         dump_df(progress_df, self.trainer_path, file_name='progress')
         loss_trajectory_df = pd.DataFrame(self.loss_trajectory, columns = ['Epoch', 'Dataset'] + self.losses)
@@ -97,3 +101,19 @@ class Trainer():
         self.plot_progress(progress_df, loss_trajectory_df)
         if verbose:
             print('Progress stored in {}'.format(self.trainer_path))
+            
+    def save(self, state_name='last', verbose=False):
+        '''Saves an optimizer state'''
+        optimizer_state_name = self.name+'_optimizer_'+state_name+'.pth'
+        torch.save(self.optimizer.state_dict(), os.path.join(self.states_path, optimizer_state_name))
+        if verbose:
+            print("Saved trainer state {} in {}".format(optimizer_state_name, self.states_path))
+            
+    def restore(self, state_name):
+        '''Restores an optimizer state'''
+        optimizer_state_name = self.name+'_optimizer_'+state_name+'.pth'
+        self.optimizer.load_state_dict(torch.load(os.path.join(self.states_path, optimizer_state_name)))
+        # Restore the progress and loss trajectory up to that part
+        self.progress = load_df(self.states_path, file_name='progress').values.tolist()
+        self.loss_trajectory = load_df(self.states_path, file_name='loss_trajectory').values.tolist()
+        
