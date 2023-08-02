@@ -59,7 +59,7 @@ def test_continue_training():
     '''Continue training the model from the previous test for 5 more epochs. Compare it to the 
     stored model and files trained from scratch for 15 epochs stored in the repository'''
     starting_from_epoch = 5
-    local_output_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'local', 'test_objects', 'test_fashionmnist_training'))
+    local_output_path = os.path.join(output_path, 'test_objects', 'test_fashionmnist_training')
     train_dataloader, eval_dataloaders = get_data(at_epoch=starting_from_epoch)
     model, trainer = get_model_trainer(local_output_path)
     
@@ -71,7 +71,7 @@ def test_continue_training():
 def test_reproducibility_after_continuing():
     '''Test that the stored model after 10 epochs is the same as the one just trained'''
     stored_obj_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'test_objects', 'test_fashionmnist_training'))
-    local_output_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'local', 'test_objects', 'test_fashionmnist_training'))
+    local_output_path = os.path.join(output_path, 'test_objects', 'test_fashionmnist_training')
     stored_model, _ = get_model_trainer(stored_obj_path)
     local_model, _ = get_model_trainer(local_output_path)
     for epoch in [10, 15]:
