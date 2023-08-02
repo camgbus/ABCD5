@@ -5,6 +5,7 @@ import os
 import json
 import pandas as pd
 import collections
+import pickle
 
 def _get_full_path(path, file_name=None, ending='.txt'):
     if file_name:
@@ -24,6 +25,18 @@ def load_df(path, file_name=None, sep=',', cols=None):
     df = pd.read_csv(path, sep=sep, usecols=cols)
     assert df is not None
     return df
+
+def dump_pkl(obj, path, file_name=None, sep=','):
+    ''''Stores an object as a Pickle file'''
+    path = _get_full_path(path, file_name, ending='.pkl')
+    with open(path, 'wb') as file:
+        pickle.dump(obj, file)
+    
+def load_pkl(path, file_name=None, sep=',', cols=None):
+    ''''Restores an object from a Pickle file'''
+    path = _get_full_path(path, file_name, ending='.pkl')
+    with open(path, 'rb') as file:
+        return pickle.load(file)
 
 def dump_json(obj, path, file_name=None):
     '''Stores an object as json file'''

@@ -1,15 +1,17 @@
 """A general trainer with logic to perform backpropagation while storing and communicating progress.
 """
 import os
+import random
+import numpy as np
 import torch
 from tqdm import tqdm
 import pandas as pd
-from abcd.utils.io import dump_df, load_df
+from abcd.utils.io import dump_df, load_df, dump_pkl, load_pkl
 from abcd.plotting.pygal.training_progress import plot_progress
 from abcd.plotting.pygal.rendering import save
 
 class Trainer():
-    def __init__(self, trainer_path, device, optimizer, loss_f, metrics=None):
+    def __init__(self, trainer_path, device, optimizer, loss_f, metrics=None, seed=None):
         self.trainer_path = trainer_path
         self.states_path = os.path.join(self.trainer_path, 'states')
         if not os.path.exists(self.states_path):
@@ -24,13 +26,13 @@ class Trainer():
         self.progress = []
         self.losses = [loss_f.__class__.__name__]
         self.loss_trajectory = []
+        self.seed = seed
         
     def train(self, model, train_dataloader, eval_dataloaders, 
               nr_epochs, starting_from_epoch=0,
               print_loss_every=5, eval_every=7, export_every=20, verbose=True):
         '''Trains a model for a given number of epochs. States and results are always recorded for
         the state before performing that epoch. E.g. state at epoch 0 is before epoch 0'''
-        model.train()
         # If we are not continuing a previous training, initialize the progress elements
         if starting_from_epoch == 0:
             self.loss_trajectory, self.progress = [], []
@@ -45,21 +47,25 @@ class Trainer():
             if t % eval_every == 0:
                 self.eval(model, eval_dataloaders, epoch_ix=t, verbose=verbose)
             if t % export_every == 0:
-                self.export(model, state_name="epoch{}".format(t), verbose=verbose)            
+                self.export(model, state_name="epoch{}".format(t), verbose=verbose)
+            if self.seed is not None:
+                train_dataloader.generator.manual_seed(self.seed+t)            
             loss_value = self.train_epoch(model, train_dataloader)
             if t % print_loss_every == 0 and verbose:
-                print("Starting epoch {}, loss {}".format(t+1, loss_value))
+                print("Ending epoch {}, loss {}".format(t+1, loss_value))
         # Save final progress
         if verbose:
-            print('\nFinished training')
+            print('Finished training')
         self.eval(model, eval_dataloaders, epoch_ix=t+1, verbose=verbose)
         self.export(model, state_name="epoch{}".format(t+1), verbose=verbose)
         
     def train_epoch(self, model, dataloader, records_per_epoch=0):
         '''Trains a model for 1 epoch'''
+        model.train()
         nr_batches = len(dataloader)
         total_loss = 0
-        for batch, (X, y) in enumerate(dataloader):
+        self.optimizer.zero_grad()
+        for _, (X, y) in enumerate(dataloader):
             # Backpropagation step
             pred = model(X)
             loss = self.loss_f(pred, y)
@@ -106,14 +112,37 @@ class Trainer():
         '''Saves an optimizer state'''
         optimizer_state_name = self.name+'_optimizer_'+state_name+'.pth'
         torch.save(self.optimizer.state_dict(), os.path.join(self.states_path, optimizer_state_name))
+        '''        
+        # Save state of random number generators
+        random_gens_name = self.name+'_random_gen_states_'+state_name
+        random_gen_states = {'random': random.getstate(), 'numpy': np.random.get_state(), 
+                  'torch': torch.get_rng_state()}
+        try:
+            random_gen_states['cuda'] = torch.cuda.get_rng_state()
+        except:
+            pass
+        dump_pkl(random_gen_states, path=self.states_path, file_name=random_gens_name)
+        '''
         if verbose:
             print("Saved trainer state {} in {}".format(optimizer_state_name, self.states_path))
             
     def restore(self, state_name):
         '''Restores an optimizer state'''
+        # Restore states of random generators
+        '''
+        random_gens_name = self.name+'_random_gen_states_'+state_name
+        random_gen_states = load_pkl(path=self.states_path, file_name=random_gens_name)
+        random.setstate(random_gen_states['random'])
+        np.random.set_state(random_gen_states['numpy'])
+        torch.set_rng_state(random_gen_states['torch'])
+        if 'cuda' in random_gen_states:
+            torch.cuda.set_rng_state_all(random_gen_states['cuda'])
+        '''
+        # Restore optimizer state
         optimizer_state_name = self.name+'_optimizer_'+state_name+'.pth'
+        random_gens_name = self.name+'_random_gen_states_'+state_name
         self.optimizer.load_state_dict(torch.load(os.path.join(self.states_path, optimizer_state_name)))
         # Restore the progress and loss trajectory up to that part
-        self.progress = load_df(self.states_path, file_name='progress').values.tolist()
-        self.loss_trajectory = load_df(self.states_path, file_name='loss_trajectory').values.tolist()
+        self.progress = load_df(self.trainer_path, file_name='progress').values.tolist()
+        self.loss_trajectory = load_df(self.trainer_path, file_name='loss_trajectory').values.tolist()
         

@@ -101,3 +101,23 @@ DEMO_VARS = {"race_ethnicity": "Race/Ethn.",
             # "demo_prnt_ed_v2_2yr_l": "Education parent 1", # Reduced dataframe significantly
             # "demo_prtnr_ed_v2_2yr_l": "Education parent 2" # Reduced dataframe significantly
             }
+
+### --- Structural MRI features --- ###
+
+STRUCT_FEATURES = {"smri_thick_cdk_mean": "Mean cortical thickness",
+                "smri_sulc_cdk_mean": "Mean cortical sulcal depth",
+                "smri_area_cdk_total": "Total hemisphere area",
+                "smri_vol_cdk_total": "Whole brain cortical volume",
+                "smri_t1wgray02_cdk_mean": "Average T1 intensity of gray matter",
+                "smri_t1ww02_cdk_mean": "Average T1 intensity of white matter",
+                "smri_t2wg02_cdk_mean": "Average T2 intensity of gray matter",
+                "smri_t2ww02_cdk_mean": "Average T2 intensity of white matter"}
+
+STRUCT_FILES = {"smri_thick_cdk_mean": "mri_y_smr_thk_dsk.csv",
+                "smri_sulc_cdk_mean": "mri_y_smr_sulc_dsk.csv",
+                "smri_area_cdk_total": "mri_y_smr_area_dsk.csv",
+                "smri_vol_cdk_total": "mri_y_smr_vol_dsk.csv",
+                "smri_t1wgray02_cdk_mean": "mri_y_smr_t1_gray_dsk.csv",
+                "smri_t1ww02_cdk_mean": "mri_y_smr_t1_white_dsk.csv",
+                "smri_t2wg02_cdk_mean": "mri_y_smr_t2_gray_dsk.csv",
+                "smri_t2ww02_cdk_mean": "mri_y_smr_t2_white_dsk.csv"}

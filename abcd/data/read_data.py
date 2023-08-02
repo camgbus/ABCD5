@@ -6,8 +6,34 @@ import pandas as pd
 from tqdm import tqdm
 import abcd.utils.io as io
 from abcd.local.paths import core_path, output_path
-from abcd.data.VARS import CONNECTIONS
+from abcd.data.VARS import CONNECTIONS, STRUCT_FILES
 
+def get_subjects_events_sf():
+    '''Fetches subjects and events with functional and structral features.
+    '''
+    try:
+        subjects_df = io.load_df(output_path, "subjects_sf_fmri")
+        events_df = io.load_df(output_path, "events_sf_fmri")
+    except:
+        subjects_df, events_df = get_subjects_events()
+        # Remove subjects with "don't know" or "refuse to answer" sex
+        subjects_df = subjects_df[subjects_df['kbi_sex_assigned_at_birth'].isin([1.0, 2.0])]
+        events_df = filter_events(subjects_df, events_df)
+        events_df = events_df.dropna()
+        # Add the sex to the events df
+        events_df = pd.merge(events_df, subjects_df[['src_subject_id','kbi_sex_assigned_at_birth']], on='src_subject_id', how='left')
+        print("There are {} visits for {} subjects".format(len(events_df), len(subjects_df)))
+        # Add structural features
+        for var_name, var_file in tqdm(STRUCT_FILES.items()):
+            file = os.path.join(core_path, "imaging", var_file)
+            events_df = add_event_vars(events_df, file, vars=[var_name])
+            events_df = events_df.dropna()
+            subjects_df = filter_subjects(subjects_df, events_df)
+            print("After adding {}, there are {} visits for {} subjects".format(var_name, len(events_df), len(subjects_df)))
+        io.dump_df(subjects_df, output_path, "subjects_sf_fmri")
+        io.dump_df(events_df, output_path, "events_sf_fmri")
+    return subjects_df, events_df
+    
 def get_subjects_events():
     '''Fetches subjects for which there are resting state fMRI connectivity scores, info. on the sex
     assigned at birth and who have only been scanned in one site.
