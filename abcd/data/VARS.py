@@ -36,6 +36,8 @@ NIH_VARIATIONS = {"_uncorrected": "Uncorrected Standard Score",
 
 NIH_TESTS_uncorrected = {key+"_uncorrected": val for key, val in NIH_TESTS.items()}
 
+NIH_COMBINED_SCORES_uncorrected = {key+"_uncorrected": val for key, val in NIH_COMBINED_SCORES.items()}
+
 
 ### --- CBCL behavior questionnaire --- ###
 
