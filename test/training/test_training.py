@@ -25,7 +25,7 @@ from abcd.data.pytorch.get_dataloaders import get_train_dl, get_eval_dls
 
 def test_fashionmnist_training():
     '''Test that training for 10 epochs was successfully executed and all relevant files were created'''
-    local_output_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', '..', 'local', 'test_objects', 'test_fashionmnist_training'))
+    local_output_path = os.path.join(output_path, 'test_objects', 'test_fashionmnist_training')
     train_dataloader, eval_dataloaders = get_data()
     model, trainer = get_model_trainer(local_output_path)
     

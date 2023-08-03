@@ -12,3 +12,4 @@ jupyter==1.0.0
 scikit-learn==1.2.2
 statsmodels==0.14.0
 python-telegram-bot==20.3
+torchvision==0.15.2
