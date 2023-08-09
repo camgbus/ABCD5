@@ -6,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 import abcd.utils.io as io
 from abcd.local.paths import core_path, output_path
-from abcd.data.VARS import CONNECTIONS, STRUCT_FILES
+import abcd.data.VARS as VARS
 
 def get_subjects_events_sf():
     '''Fetches subjects and events with functional and structral features.
@@ -16,8 +16,6 @@ def get_subjects_events_sf():
         events_df = io.load_df(output_path, "events_sf_fmri")
     except:
         subjects_df, events_df = get_subjects_events()
-        # Remove subjects with "don't know" or "refuse to answer" sex
-        subjects_df = subjects_df[subjects_df['kbi_sex_assigned_at_birth'].isin([1.0, 2.0])]
         events_df = filter_events(subjects_df, events_df)
         events_df = events_df.dropna()
         # Add the sex to the events df
@@ -49,6 +47,7 @@ def get_subjects_events():
         subjects_df, events_df = read_events_general_info()
         subjects_df, events_df = add_event_connectivity_scores(subjects_df, events_df)
         subjects_df, events_df = add_subject_sex(subjects_df, events_df)
+        subjects_df, events_df = add_subject_ethnicity(subjects_df, events_df)
         io.dump_df(subjects_df, output_path, "subjects_sex_fmri")
         io.dump_df(events_df, output_path, "events_sex_fmri")
     return subjects_df, events_df
@@ -57,7 +56,8 @@ def add_event_connectivity_scores(subjects_df, events_df):
     '''Add Resting state fMRI - Correlations (Gordon network). Filter subjects without connections.
     '''
     rs_fmri_file = os.path.join(core_path, "imaging", "mri_y_rsfmr_cor_gp_gp.csv")
-    new_events_df = add_event_vars(events_df, rs_fmri_file, vars=CONNECTIONS)
+    new_events_df = add_event_vars(events_df, VARS.fMRI_PATH, vars=list(VARS.NAMED_CONNECTIONS.keys()))
+    new_events_df = new_events_df.dropna() 
     new_subjects_df = filter_subjects(subjects_df, new_events_df)
     return new_subjects_df, new_events_df
 
@@ -67,9 +67,20 @@ def add_subject_sex(subjects_df, events_df):
     '''
     table_path = os.path.join(core_path, "gender-identity-sexual-health", "gish_y_gi.csv")
     new_subjects_df = add_subject_vars(subjects_df, table_path, vars=["kbi_sex_assigned_at_birth"])
+    # Remove subjects with "don't know" or "refuse to answer" sex
+    new_subjects_df = new_subjects_df[new_subjects_df['kbi_sex_assigned_at_birth'].isin([1.0, 2.0])]
     new_events_df = filter_events(new_subjects_df, events_df)
     return new_subjects_df, new_events_df
-    
+
+def add_subject_ethnicity(subjects_df, events_df):
+    '''Add the subject's race/ethnicity
+    '''
+    table_path = os.path.join(core_path, "abcd-general", "abcd_p_demo.csv")
+    new_subjects_df = add_subject_vars(subjects_df, table_path, vars=["race_ethnicity"])
+    new_subjects_df = new_subjects_df.dropna()
+    new_events_df = filter_events(new_subjects_df, events_df)
+    return new_subjects_df, new_events_df
+
 def filter_subjects(subjects_df, events_df):
     '''Filter subjects for which there are no events'''
     return subjects_df[subjects_df.apply(lambda x: 
@@ -80,7 +91,7 @@ def filter_events(subjects_df, events_df):
     subject_ids = list(subjects_df['src_subject_id'])
     return events_df[events_df.src_subject_id.isin(subject_ids)]
 
-def add_subject_vars(subjects_df, table_path, vars=[]):
+def add_subject_vars(subjects_df, table_path, vars=[], leave_first=False):
     '''Add additional information to the subjects dataframe. If there are more than one entries for
     that value, the subject is filtered out.
     
@@ -102,7 +113,10 @@ def add_subject_vars(subjects_df, table_path, vars=[]):
             if len(values) == 1:
                 new_row.append(values[0])
             else:
-                new_row.append(None)
+                if leave_first:
+                    new_row.append(values[0])
+                else:
+                    new_row.append(None)
         if all(new_row):
             new_df.append(new_row)  # Filter out subjects with missing values (or >1 per subject)
         #else:
@@ -164,6 +178,8 @@ def read_events_general_info(output_path=output_path):
     subjects_df = pd.DataFrame(subjects, columns=['src_subject_id', 'site_id_l', 'rel_family_id'])
     events = [event for event in events if event[0] not in filtered_subject_ids]
     events_df = pd.DataFrame(events, columns=['src_subject_id', 'interview_date', 'eventname', 'interview_age'])
+    events_df = events_df.dropna() 
+    subjects_df = filter_subjects(subjects_df, events_df)
     if output_path:
         io.dump_df(subjects_df, output_path, "subjects_gi")
         io.dump_df(events_df, output_path, "events_gi")
