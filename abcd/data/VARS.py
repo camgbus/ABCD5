@@ -6,6 +6,9 @@ from collections import OrderedDict
 from itertools import product
 from abcd.local.paths import core_path
 
+### --- VAR VALUES --- ###
+VALUES = {"kbi_sex_assigned_at_birth": {1: "Male", 2: "Female"}}
+
 ### --- NIH Toolbox neurocognition --- ###
 NIH_PATH = os.path.join(core_path, "neurocognition", "nc_y_nihtb.csv")
 
@@ -102,22 +105,41 @@ DEMO_VARS = {"race_ethnicity": "Race/Ethn.",
             # "demo_prtnr_ed_v2_2yr_l": "Education parent 2" # Reduced dataframe significantly
             }
 
+VALUES["race_ethnicity"] = {1: "White", 2: "Black", 3: "Hispanic", 4: "Asian", 5: "Other"}
+
 ### --- Structural MRI features --- ###
 
-STRUCT_FEATURES = {"smri_thick_cdk_mean": "Mean cortical thickness",
-                "smri_sulc_cdk_mean": "Mean cortical sulcal depth",
-                "smri_area_cdk_total": "Total hemisphere area",
-                "smri_vol_cdk_total": "Whole brain cortical volume",
-                "smri_t1wgray02_cdk_mean": "Average T1 intensity of gray matter",
-                "smri_t1ww02_cdk_mean": "Average T1 intensity of white matter",
-                "smri_t2wg02_cdk_mean": "Average T2 intensity of gray matter",
-                "smri_t2ww02_cdk_mean": "Average T2 intensity of white matter"}
+DESIKAN_STRUCT_FEATURES = {"smri_thick_cdk": "Cortical thickness",
+                "smri_sulc_cdk": "Sulcal depth",
+                "smri_area_cdk": "Surface area",
+                "smri_vol_cdk": "Volume",
+                "smri_t1wgray02_cdk": "T1 intensity - gray matter",
+                "smri_t1ww02_cdk": "T1 intensity - white matter",
+                "smri_t2wg02_cdk": "T2 intensity - gray matter",
+                "smri_t2ww02_cdk": "T2 intensity - white matter"}
 
-STRUCT_FILES = {"smri_thick_cdk_mean": "mri_y_smr_thk_dsk.csv",
-                "smri_sulc_cdk_mean": "mri_y_smr_sulc_dsk.csv",
-                "smri_area_cdk_total": "mri_y_smr_area_dsk.csv",
-                "smri_vol_cdk_total": "mri_y_smr_vol_dsk.csv",
-                "smri_t1wgray02_cdk_mean": "mri_y_smr_t1_gray_dsk.csv",
-                "smri_t1ww02_cdk_mean": "mri_y_smr_t1_white_dsk.csv",
-                "smri_t2wg02_cdk_mean": "mri_y_smr_t2_gray_dsk.csv",
-                "smri_t2ww02_cdk_mean": "mri_y_smr_t2_white_dsk.csv"}
+DESIKAN_STRUCT_FILES = {"smri_thick_cdk": "mri_y_smr_thk_dsk.csv",
+                "smri_sulc_cdk": "mri_y_smr_sulc_dsk.csv",
+                "smri_area_cdk": "mri_y_smr_area_dsk.csv",
+                "smri_vol_cdk": "mri_y_smr_vol_dsk.csv",
+                "smri_t1wgray02_cdk": "mri_y_smr_t1_gray_dsk.csv",
+                "smri_t1ww02_cdk": "mri_y_smr_t1_white_dsk.csv",
+                "smri_t2wg02_cdk": "mri_y_smr_t2_gray_dsk.csv",
+                "smri_t2ww02_cdk": "mri_y_smr_t2_white_dsk.csv"}
+
+# 68 Desikan (dsk) parcels
+# Variable name = name + _parcel   e.g. smri_thick_cdk_banksstslh
+DESIKAN_PARCELS_1 = ['banksstslh', 'cdacatelh', 'cdmdfrlh', 'cuneuslh', 'ehinallh', 'fusiformlh', 'ifpllh', 'iftmlh', 'ihcatelh', 'locclh', 'lobfrlh', 'linguallh', 'mobfrlh', 'mdtmlh', 'parahpallh', 'paracnlh', 'parsopclh', 'parsobislh', 'parstgrislh', 'pericclh', 'postcnlh', 'ptcatelh', 'precnlh', 'pclh', 'rracatelh', 'rrmdfrlh', 'sufrlh', 'supllh', 'sutmlh', 'smlh', 'frpolelh', 'tmpolelh', 'trvtmlh', 'insulalh', 'banksstsrh', 'cdacaterh', 'cdmdfrrh', 'cuneusrh', 'ehinalrh', 'fusiformrh', 'ifplrh', 'iftmrh', 'ihcaterh', 'loccrh', 'lobfrrh', 'lingualrh', 'mobfrrh', 'mdtmrh', 'parahpalrh', 'paracnrh', 'parsopcrh', 'parsobisrh', 'parstgrisrh', 'periccrh', 'postcnrh', 'ptcaterh', 'precnrh', 'pcrh', 'rracaterh', 'rrmdfrrh', 'sufrrh', 'suplrh', 'sutmrh', 'smrh', 'frpolerh', 'tmpolerh', 'trvtmrh', 'insularh']
+DESIKAN_PARCELS_2 = ['banksstslh', 'cdatcgatelh', 'cdmdflh', 'cuneuslh', 'ehinallh', 'fusiformlh', 'ifpllh', 'iftmlh', 'ihcgatelh', 'ltocclh', 'ltoboflh', 'linguallh', 'moboflh', 'mdtmlh', 'parahpallh', 'paractlh', 'popclh', 'pobalislh', 'parstgslh', 'pericclh', 'postctlh', 'pscgatelh', 'prectlh', 'pnlh', 'rtatcgatelh', 'rtmdflh', 'suflh', 'supllh', 'sutmlh', 'smlh', 'fpolelh', 'tmpolelh', 'tvtmlh', 'insulalh', 'banksstsrh', 'cdatcgaterh', 'cdmdfrh', 'cuneusrh', 'ehinalrh', 'fusiformrh', 'ifplrh', 'iftmrh', 'ihcgaterh', 'ltoccrh', 'ltobofrh', 'lingualrh', 'mobofrh', 'mdtmrh', 'parahpalrh', 'paractrh', 'popcrh', 'pobalisrh', 'parstgsrh', 'periccrh', 'postctrh', 'pscgaterh', 'prectrh', 'pnrh', 'rtatcgaterh', 'rtmdfrh', 'sufrh', 'suplrh', 'sutmrh', 'smrh', 'fpolerh', 'tmpolerh', 'tvtmrh', 'insularh']
+
+DESIKAN_PARCELS = {"smri_thick_cdk": DESIKAN_PARCELS_1,
+                "smri_sulc_cdk": DESIKAN_PARCELS_1,
+                "smri_area_cdk": DESIKAN_PARCELS_1,
+                "smri_vol_cdk": DESIKAN_PARCELS_1,
+                "smri_t1wgray02_cdk": DESIKAN_PARCELS_1,
+                "smri_t1ww02_cdk": DESIKAN_PARCELS_1,
+                "smri_t2wg02_cdk": DESIKAN_PARCELS_2,
+                "smri_t2ww02_cdk": DESIKAN_PARCELS_2}
+
+DESIKAN_MEANS = ['meanlh', 'meanrh', 'mean']
+DESIKAN_TOTALS = ['totallh', 'totalrh', 'total']

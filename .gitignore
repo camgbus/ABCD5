@@ -1,5 +1,6 @@
 # Ignore the following directories and files:
 abcd/local/*
+*local_*
 
 #MAC generated files
 .DS_Store

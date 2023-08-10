@@ -1,4 +1,4 @@
-"""Verious IO operations.
+"""Various IO operations.
 """
 
 import os

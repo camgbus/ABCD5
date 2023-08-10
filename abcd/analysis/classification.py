@@ -1,0 +1,107 @@
+import os
+import pandas as pd
+from collections import OrderedDict
+import torch
+torch.manual_seed(0)
+from torch import nn
+from torch.utils.data import DataLoader
+from torchvision import datasets
+from torchvision.transforms import ToTensor
+from tqdm import tqdm
+from abcd.local.paths import output_path
+from abcd.data.read_data import get_subjects_events_sf, subject_cols_to_events
+import abcd.data.VARS as VARS
+from abcd.data.define_splits import SITES, save_restore_sex_fmri_splits
+from abcd.data.divide_with_splits import divide_events_by_splits
+from abcd.data.var_tailoring.normalization import normalize_var
+from abcd.data.pytorch.get_dataset import PandasDataset
+from abcd.training.ClassifierTrainer import ClassifierTrainer
+from abcd.local.paths import core_path
+import abcd.data.VARS as VARS
+from abcd.exp.Experiment import Experiment
+import importlib
+
+def train_classifier(exp):
+    
+    config = exp.config
+    
+    # Fetch subjects and events
+    subjects_df, events_df = get_subjects_events_sf()
+    print("There are {} subjects and {} visits with imaging".format(len(subjects_df), len(events_df)))
+    # Leave only the baseline visits
+    events_df = events_df.loc[(events_df['eventname'] == 'baseline_year_1_arm_1')]
+    print("Leaving baseline visits, we have {} visits".format(len(events_df)))
+
+    # Add the target to the events df, if not there
+    target_col = config['target_col']
+    if target_col not in events_df.columns:
+        events_df = subject_cols_to_events(subjects_df, events_df, columns=[target_col])
+
+    # Change ABCD values to class integers starting from 0
+    labels = sorted(list(set(events_df[target_col])))
+    for ix, label in enumerate(labels):
+        events_df.loc[events_df[target_col] == label, target_col] = ix
+    labels = [VARS.VALUES[target_col][label] for label in labels] if target_col in VARS.VALUES else [str(label) for label in labels]
+
+    # Print label distribution
+    for val in set(events_df[target_col]):
+        print('{} visits with {} target'.format(len(events_df.loc[events_df[target_col] == val]), labels[int(val)]))
+        
+    # Define features
+    features_fmri = list(VARS.NAMED_CONNECTIONS.keys())
+    features_smri = [var_name + '_' + parcel for var_name in VARS.DESIKAN_STRUCT_FEATURES.keys() for parcel in VARS.DESIKAN_PARCELS[var_name] + VARS.DESIKAN_MEANS]
+    feature_cols = []
+    if 'fmri' in config['features']:
+        feature_cols += features_fmri
+    if 'smri' in config['features']:
+        feature_cols += features_smri
+
+    # Normalize features
+    for var_id in feature_cols:
+        events_df = normalize_var(events_df, var_id, var_id)
+        
+    # Divide events into training, validation and testing
+    splits = save_restore_sex_fmri_splits(k=5)
+    ood_site_id = SITES[0]
+    events_train, events_id_test, events_ood_test = divide_events_by_splits(events_df, splits, ood_site_id)
+    print("Nr. events train: {}, val: {}, test: {}".format(len(events_train), len(events_id_test), len(events_ood_test)))
+    
+    # Define PyTorch datasets and dataloaders
+    datasets = OrderedDict([('Train', PandasDataset(events_train, feature_cols, target_col)),
+                ('Val', PandasDataset(events_id_test, feature_cols, target_col)),
+                ('Test', PandasDataset(events_ood_test, feature_cols, target_col))])
+    
+    # Create dataloaders
+    batch_size = config['batch_size']
+    dataloaders = OrderedDict([(dataset_name, DataLoader(dataset, batch_size=batch_size, shuffle=True))
+        for dataset_name, dataset in datasets.items()])
+
+    for X, y in dataloaders['Train']:
+        print(f"Shape of X: {X.shape}")
+        print(f"Shape of y: {y.shape} {y.dtype}")
+        break
+    
+    # Determine device for training
+    device = ("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+    print("Using {} device".format(device))
+    
+    # Define model
+    models_path = os.path.join(exp.path, 'models')
+    module = importlib.import_module(config['model'][0])
+    model = getattr(module, config['model'][1])(save_path=models_path, labels=labels, input_size=len(feature_cols))
+    #model = FullyConnected5(save_path=models_path, labels=labels, input_size=len(feature_cols))
+    model = model.to(device)
+    print(model)
+    
+    # Define optimizer and trainer
+    learning_rate = config['lr']
+    loss_f = nn.CrossEntropyLoss()
+    trainer_path = os.path.join(exp.path, 'trainer')
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    trainer = ClassifierTrainer(trainer_path, device, optimizer, loss_f, labels=labels)
+    
+    # Train model
+    nr_epochs = config['nr_epochs']
+    trainer.train(model, dataloaders['Train'], dataloaders, 
+                nr_epochs=nr_epochs, starting_from_epoch=0,
+                print_loss_every=int(nr_epochs/10), eval_every=int(nr_epochs/10), export_every=int(nr_epochs/5), verbose=True)

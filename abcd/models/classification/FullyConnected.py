@@ -28,3 +28,18 @@ class FullyConnected3(FullyConnected):
             nn.Linear(512, len(self.labels)),
         )
     
+class FullyConnected5(FullyConnected):
+    def __init__(self, *args, **kwargs):
+        super(FullyConnected5, self).__init__(*args, **kwargs)
+        self.linear_layers = nn.Sequential(
+            nn.Linear(self.input_size, 512),
+            nn.ReLU(),
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Linear(256, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, len(self.labels)),
+        )
+    
