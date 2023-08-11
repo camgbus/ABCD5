@@ -53,7 +53,7 @@ class ClassifierTrainer(Trainer):
             
     def plot_confusion_matrix(self, targets, predictions, file_name):
         ''''Plot the confusion matrix for the given epoch.'''
-        cm = confusion_matrix(targets, predictions)
+        cm = confusion_matrix(targets, predictions, nr_labels=len(self.labels))
         plot = plot_confusion_matrix(cm, labels=self.labels, figure_size=(12,10))
         path = os.path.join(self.trainer_path, 'confusion_matrices')
         if not os.path.exists(path):

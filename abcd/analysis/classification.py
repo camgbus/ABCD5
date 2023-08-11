@@ -1,25 +1,21 @@
 import os
-import pandas as pd
+import numpy as np
 from collections import OrderedDict
 import torch
 torch.manual_seed(0)
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision import datasets
-from torchvision.transforms import ToTensor
-from tqdm import tqdm
-from abcd.local.paths import output_path
-from abcd.data.read_data import get_subjects_events_sf, subject_cols_to_events
+import pandas as pd
+import importlib
+from sklearn.utils.class_weight import compute_class_weight
 import abcd.data.VARS as VARS
+from abcd.data.read_data import get_subjects_events_sf, subject_cols_to_events, add_event_vars
 from abcd.data.define_splits import SITES, save_restore_sex_fmri_splits
 from abcd.data.divide_with_splits import divide_events_by_splits
 from abcd.data.var_tailoring.normalization import normalize_var
+from abcd.data.var_tailoring.discretization import discretize_var
 from abcd.data.pytorch.get_dataset import PandasDataset
 from abcd.training.ClassifierTrainer import ClassifierTrainer
-from abcd.local.paths import core_path
-import abcd.data.VARS as VARS
-from abcd.exp.Experiment import Experiment
-import importlib
 
 def train_classifier(exp):
     
@@ -35,13 +31,30 @@ def train_classifier(exp):
     # Add the target to the events df, if not there
     target_col = config['target_col']
     if target_col not in events_df.columns:
-        events_df = subject_cols_to_events(subjects_df, events_df, columns=[target_col])
+        if target_col in subjects_df.columns:
+            events_df = subject_cols_to_events(subjects_df, events_df, columns=[target_col])
+        elif 'nihtbx' in target_col:
+            events_df = add_event_vars(events_df, VARS.NIH_PATH, vars=[target_col])
+        elif 'cbcl' in target_col:
+            events_df = add_event_vars(events_df, VARS.CBCL_PATH, vars=[target_col])
+        else:
+            raise("Column {}, meant to be the target, was not recognized".format(target_col))
+    events_df = events_df.dropna()
+    print("There are {} visits after adding the target and removing NAs".format(len(events_df)))
+        
+    # If the target variable is conitnuous (over 25 possible values), discretize
+    labels = sorted(list(set(events_df[target_col])))
+    if len(labels) > 25:
+        events_df = discretize_var(events_df, target_col, target_col+"_d", nr_bins=4, by_freq=True)
+        target_col = target_col+"_d"
+        labels = sorted(list(set(events_df[target_col])), key=lambda x: float(x.replace("<= ", "")))
+    print("Labels: {}".format(labels))
 
     # Change ABCD values to class integers starting from 0
-    labels = sorted(list(set(events_df[target_col])))
     for ix, label in enumerate(labels):
         events_df.loc[events_df[target_col] == label, target_col] = ix
     labels = [VARS.VALUES[target_col][label] for label in labels] if target_col in VARS.VALUES else [str(label) for label in labels]
+    events_df[target_col] = pd.to_numeric(events_df[target_col])
 
     # Print label distribution
     for val in set(events_df[target_col]):
@@ -95,7 +108,13 @@ def train_classifier(exp):
     
     # Define optimizer and trainer
     learning_rate = config['lr']
-    loss_f = nn.CrossEntropyLoss()
+    if config.get('weighted'):
+        class_weights = compute_class_weight('balanced', classes=range(len(labels)), y=datasets['Train'].y.numpy())
+        class_weights = torch.tensor(class_weights,dtype=torch.float)
+        print("Loss weights: {}".format(class_weights))
+        loss_f = nn.CrossEntropyLoss(weight=class_weights)
+    else:
+        loss_f = nn.CrossEntropyLoss()
     trainer_path = os.path.join(exp.path, 'trainer')
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     trainer = ClassifierTrainer(trainer_path, device, optimizer, loss_f, labels=labels)

@@ -20,10 +20,11 @@ class Experiment:
         notes (str): optional notes about the experiment
         reload_exp (bool): Reload or throw error when experiment name exists?
     '''
-    def __init__(self, name=None, config={}, notes='', reload_exp=False):
+    def __init__(self, name=None, config={}, notes='', reload_exp=False, debugging=False):
         self.start_time = get_time()
-        self.old_stdout = sys.stdout
-        sys.stdout = self.stdout = io.StringIO()
+        if not debugging:
+            self.old_stdout = sys.stdout
+            sys.stdout = self.stdout = io.StringIO()
         # Store or build name
         if name is None:
             self.name = get_time_string(self.start_time)

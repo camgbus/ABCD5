@@ -7,10 +7,10 @@ def rename_config(configs_path, config_name, prev_state, new_state):
         os.path.join(configs_path, new_name))
     return new_name
 
-def choose_next_config(configs_path):
+def choose_next_config(configs_path, state="READY"):
     '''Return next config that is available, staring with shortest
     '''
-    available = sorted([f for f in os.listdir(configs_path) if '[READY]' in f], key=lambda x: len(x))
+    available = sorted([f for f in os.listdir(configs_path) if '[{}]'.format(state) in f], key=lambda x: len(x))
     if len(available)>0:
         config_name = available[0]
         return config_name

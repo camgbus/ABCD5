@@ -22,10 +22,11 @@ import numpy as np
 
 # Multi-class scores that are already averaged in a specific ways and receive lists of ints
 
-def confusion_matrix(y_true, y_pred):
-    '''Returns a confusion matrix, where the in the first dimension are the true classes and in the
+def confusion_matrix(y_true, y_pred, nr_labels=None):
+    '''Returns a confusion matrix, where in the first dimension are the true classes and in the
     second, what they were predicted as. For instance cm[0] are the values for the true class 0'''
-    return metrics.confusion_matrix(y_true, y_pred)
+    labels = range(nr_labels) if nr_labels else None
+    return metrics.confusion_matrix(y_true, y_pred, labels=labels)
 
 def accuracy(y_true, y_pred):
     '''Accuracy = sum of TP for each class / total nr. elements'''
