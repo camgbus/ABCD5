@@ -12,3 +12,4 @@ scikit-learn==1.2.2
 statsmodels==0.14.0
 python-telegram-bot==12.8
 torchvision==0.15.2
+shap==0.42.1

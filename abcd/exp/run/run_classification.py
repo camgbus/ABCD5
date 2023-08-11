@@ -7,7 +7,7 @@ from abcd.utils.io import load_json
 from abcd.local.paths import output_path
 
 # TODO Adapt
-from abcd.analysis.classification import train_classifier
+from abcd.analysis.classification import classification
 configs_path = os.path.join(output_path, 'configs', 'classification')
 
 def main():
@@ -36,7 +36,7 @@ def main():
         config = load_json(path=configs_path, file_name=config_name)
         if debugging:
             exp = Experiment(name=config['exp_name'], config=config, reload_exp=True, debugging=True)
-            train_classifier(exp)
+            classification(exp)
         else:
             # Initialize experiment
             config_name = cu.rename_config(configs_path, config_name, state, 'TRAINING')      
@@ -44,7 +44,7 @@ def main():
             bot.send_msg('Starting {} in {}'.format(exp.name, hardware_name))
             try:    
                 # Actually run. TODO adapt
-                train_classifier(exp)
+                classification(exp)
                 exp.finish()
             except:
                 exp.finish(failed=True)

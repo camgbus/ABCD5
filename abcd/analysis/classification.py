@@ -8,6 +8,8 @@ from torch.utils.data import DataLoader
 import pandas as pd
 import importlib
 from sklearn.utils.class_weight import compute_class_weight
+import shap
+import matplotlib.pyplot as plt
 import abcd.data.VARS as VARS
 from abcd.data.read_data import get_subjects_events_sf, subject_cols_to_events, add_event_vars
 from abcd.data.define_splits import SITES, save_restore_sex_fmri_splits
@@ -17,7 +19,7 @@ from abcd.data.var_tailoring.discretization import discretize_var
 from abcd.data.pytorch.get_dataset import PandasDataset
 from abcd.training.ClassifierTrainer import ClassifierTrainer
 
-def train_classifier(exp):
+def classification(exp, eval_config=False):
     
     config = exp.config
     
@@ -42,7 +44,7 @@ def train_classifier(exp):
     events_df = events_df.dropna()
     print("There are {} visits after adding the target and removing NAs".format(len(events_df)))
         
-    # If the target variable is conitnuous (over 25 possible values), discretize
+    # If the target variable is continuous (over 25 possible values), discretize
     labels = sorted(list(set(events_df[target_col])))
     if len(labels) > 25:
         events_df = discretize_var(events_df, target_col, target_col+"_d", nr_bins=4, by_freq=True)
@@ -115,12 +117,26 @@ def train_classifier(exp):
         loss_f = nn.CrossEntropyLoss(weight=class_weights)
     else:
         loss_f = nn.CrossEntropyLoss()
-    trainer_path = os.path.join(exp.path, 'trainer')
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    trainer = ClassifierTrainer(trainer_path, device, optimizer, loss_f, labels=labels)
     
-    # Train model
-    nr_epochs = config['nr_epochs']
-    trainer.train(model, dataloaders['Train'], dataloaders, 
-                nr_epochs=nr_epochs, starting_from_epoch=0,
-                print_loss_every=int(nr_epochs/10), eval_every=int(nr_epochs/10), export_every=int(nr_epochs/5), verbose=True)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    if not eval_config: # Train model
+        trainer_path = os.path.join(exp.path, 'trainer')
+        trainer = ClassifierTrainer(trainer_path, device, optimizer, loss_f, labels=labels)
+        nr_epochs = config['nr_epochs']
+        trainer.train(model, dataloaders['Train'], dataloaders, 
+                    nr_epochs=nr_epochs, starting_from_epoch=0,
+                    print_loss_every=int(nr_epochs/10), eval_every=int(nr_epochs/10), export_every=int(nr_epochs/5), verbose=True)        
+    else: # Only evaluate
+        results_path = os.path.join(exp.path, 'results')
+        trainer = ClassifierTrainer(results_path, device, optimizer, loss_f, labels=labels)
+        for state_name in eval_config["states"]:
+            model.restore(state_name)
+            trainer.eval(model, dataloaders, epoch_ix=state_name, verbose=True)
+            trainer.export(model, state_name=state_name, only_results=True, verbose=False)
+            
+            e = shap.DeepExplainer(model, datasets["Train"].X)
+            val_X = datasets["Val"].X[:5]
+            shap_values = e.shap_values(val_X)
+            shap.summary_plot(shap_values, val_X, feature_names=feature_cols, max_display=20, class_names=labels, show=False)
+            plt.savefig(os.path.join(trainer.trainer_path, "shap_{}.png".format(state_name)))
+            

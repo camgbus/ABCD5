@@ -96,15 +96,17 @@ class Trainer():
             plot = plot_progress(loss_trajectory_df, loss)
             save(plot, self.trainer_path, 'Trajectory {}'.format(loss))
     
-    def export(self, model, state_name, verbose=False):
+    def export(self, model, state_name, only_results=False, verbose=False):
         '''Saves the model state, exports results until this point (as a csv) and updates plots'''
-        model.save(state_name=state_name, verbose=verbose)
-        self.save(state_name=state_name, verbose=verbose)
+        if not only_results:
+            model.save(state_name=state_name, verbose=verbose)
+            self.save(state_name=state_name, verbose=verbose)
         progress_df = pd.DataFrame(self.progress, columns = ['Epoch', 'Dataset'] + self.metrics)
         dump_df(progress_df, self.trainer_path, file_name='progress')
         loss_trajectory_df = pd.DataFrame(self.loss_trajectory, columns = ['Epoch', 'Dataset'] + self.losses)
         dump_df(loss_trajectory_df, self.trainer_path, file_name='loss_trajectory')
-        self.plot_progress(progress_df, loss_trajectory_df)
+        if not only_results:
+            self.plot_progress(progress_df, loss_trajectory_df)
         if verbose:
             print('Progress stored in {}'.format(self.trainer_path))
             
@@ -140,7 +142,7 @@ class Trainer():
         '''
         # Restore optimizer state
         optimizer_state_name = self.name+'_optimizer_'+state_name+'.pth'
-        random_gens_name = self.name+'_random_gen_states_'+state_name
+        #random_gens_name = self.name+'_random_gen_states_'+state_name
         self.optimizer.load_state_dict(torch.load(os.path.join(self.states_path, optimizer_state_name)))
         # Restore the progress and loss trajectory up to that part
         self.progress = load_df(self.trainer_path, file_name='progress').values.tolist()
