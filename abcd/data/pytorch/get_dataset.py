@@ -6,9 +6,9 @@ from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor, Lambda
 
 class PandasDataset(Dataset):
-    def __init__(self, df, feature_cols, target_col):
+    def __init__(self, df, feature_cols, target_col, y_dtype=torch.int64):
         self.X = torch.tensor(df[feature_cols].values, dtype=torch.float32)
-        self.y = torch.tensor(df[target_col].values, dtype=torch.int64)
+        self.y = torch.tensor(df[target_col].values, dtype=y_dtype)
 
     def __len__(self):
         return len(self.y)
