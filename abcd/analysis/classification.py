@@ -133,10 +133,10 @@ def classification(exp, eval_config=False):
             model.restore(state_name)
             trainer.eval(model, dataloaders, epoch_ix=state_name, verbose=True)
             trainer.export(model, state_name=state_name, only_results=True, verbose=False)
-            
-            e = shap.DeepExplainer(model, datasets["Train"].X)
-            val_X = datasets["Val"].X[:5]
-            shap_values = e.shap_values(val_X)
-            shap.summary_plot(shap_values, val_X, feature_names=feature_cols, max_display=20, class_names=labels, show=False)
-            plt.savefig(os.path.join(trainer.trainer_path, "shap_{}.png".format(state_name)))
+            if eval_config.get("shap"):
+                e = shap.DeepExplainer(model, datasets["Train"].X)
+                val_X = datasets["Val"].X[:50]
+                shap_values = e.shap_values(val_X)
+                shap.summary_plot(shap_values, val_X, feature_names=feature_cols, max_display=20, class_names=labels, show=False)
+                plt.savefig(os.path.join(trainer.trainer_path, "shap_{}.png".format(state_name)))
             
