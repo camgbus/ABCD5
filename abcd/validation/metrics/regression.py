@@ -1,4 +1,5 @@
-"""Metrics for evaluating regression performance.
+"""Metrics for evaluating regression performance. Also includes a method to translate regression predictions to
+class predictions given a list of thresholds and corresponding labels.
 
 Metrics:
 - Mean Absolute Error (MAE): Measures the average magnitude of the errors between predicted and observed values.
@@ -35,3 +36,18 @@ def explained_variance_score(y_true, y_pred):
 def median_absolute_error(y_true, y_pred):
     '''Median Absolute Error'''
     return metrics.median_absolute_error(y_true, y_pred)
+
+def translate_to_classes(y, class_labels, thresholds):
+    '''Translates regression predictions to class predictions given a list of thresholds and corresponding labels.
+
+    Params:
+        y: numpy aray of shape (n, 1)
+        class_labels: list of class labels
+        thresholds: list of thresholds corresponding to each class. thresholds[i] is the lower bound of class i.
+    Returns y_classes: numpy array of shape (n, 1) with class labels
+    '''
+    assert len(class_labels) == len(thresholds)
+    y_classes = np.zeros(y.shape)
+    for i, threshold in enumerate(thresholds):
+        y_classes[y >= threshold] = class_labels[i]
+    return y_classes
