@@ -8,8 +8,35 @@ import abcd.utils.io as io
 from abcd.local.paths import core_path, output_path
 import abcd.data.VARS as VARS
 
+def get_subjects_events_visits(target_visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1']):
+    name_suffix = '-'.join([v[0] for v in target_visits])
+    try:
+        subjects_df = io.load_df(output_path, "subjects_{}".format(name_suffix))
+        events_df = io.load_df(output_path, "events_{}".format(name_suffix))
+    except:
+        subjects_df, events_df = get_subjects_events_sf()
+        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, target_visits = target_visits)
+        # Adding per-subject NIH Neurocognition scores
+        subjects_df = add_subject_vars(subjects_df, VARS.NIH_PATH, vars=list(VARS.NIH_TESTS_uncorrected.keys()), leave_first=True)
+        # Adding per-subject household income information
+        subjects_df = add_subject_vars(subjects_df, VARS.DEMO_PATH, vars=["demo_comb_income_v2"], leave_first=True)
+        subjects_df = subjects_df[subjects_df['demo_comb_income_v2'].isin(VARS.VALUES['demo_comb_income_v2'].keys())] # Filtering our 777 and 999
+        events_df = filter_events(subjects_df, events_df)
+        # Adding per-visit CBCL scores
+        events_df = add_event_vars(events_df, VARS.CBCL_PATH, vars=list(VARS.CBCL_SCORES_t.keys()))
+        events_df = events_df.dropna() 
+        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, target_visits=target_visits)
+        # Adding sleeping habits
+        events_df = add_event_vars(events_df, VARS.SLEEP_PATHS['sleepdisturb1_p'], vars=['sleepdisturb1_p', 'sleepdisturb2_p'])
+        events_df = events_df.dropna() 
+        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, target_visits=target_visits)
+        io.dump_df(subjects_df, output_path, "subjects_{}".format(name_suffix))
+        io.dump_df(events_df, output_path, "events_{}".format(name_suffix))
+    return subjects_df, events_df
+
 def get_subjects_events_sf():
-    '''Fetches subjects and events with functional and structral features.
+    '''Fetches subjects and events with functional and structural features, as well as sex and 
+    race/ethnicity information.
     '''
     try:
         subjects_df = io.load_df(output_path, "subjects_sfmri")
@@ -54,12 +81,27 @@ def get_subjects_events():
         io.dump_df(subjects_df, output_path, "subjects_fmri")
         io.dump_df(events_df, output_path, "events_fmri")
     return subjects_df, events_df
+
+def filter_df_by_visits(subjects_df, events_df, target_visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1']):
+    '''Leave only subjects for which there is data for all the specified visits
+    '''
+    complete_subjects = []
+    for subject_id in tqdm(set(events_df['src_subject_id'])):
+        subject_events_df = events_df.loc[(events_df['src_subject_id'] == subject_id)]
+        eventnames = set(subject_events_df['eventname'])
+        if all([x in eventnames for x in target_visits]):
+            complete_subjects.append(subject_id)
+    complete_events_df = events_df[events_df['src_subject_id'].isin(complete_subjects)]
+    complete_events_df = complete_events_df[complete_events_df['eventname'].isin(target_visits)]
+    complete_subjects_df = filter_subjects(subjects_df, complete_events_df)
+    assert len(complete_events_df) == len(target_visits)*len(complete_subjects_df)
+    return complete_subjects_df, complete_events_df
     
 def add_event_connectivity_scores(subjects_df, events_df):
     '''Add Resting state fMRI - Correlations (Gordon network). Filter subjects without connections.
     '''
-    rs_fmri_file = os.path.join(core_path, "imaging", "mri_y_rsfmr_cor_gp_gp.csv")
     new_events_df = add_event_vars(events_df, VARS.fMRI_PATH, vars=list(VARS.NAMED_CONNECTIONS.keys()))
+    new_events_df = add_event_vars(events_df, VARS.fMRI_to_subcortical_PATH, vars=list(VARS.CONNECTIONS_C_SC.keys()))
     new_events_df = new_events_df.dropna() 
     new_subjects_df = filter_subjects(subjects_df, new_events_df)
     return new_subjects_df, new_events_df
@@ -106,6 +148,8 @@ def add_subject_vars(subjects_df, table_path, vars=[], leave_first=False):
         subjects_df (pandas.DataFrame): Subjects dataframe
         table_path (str): path to the additional table
         vars ([str]): list of variables to be added to that table
+        leave_first (bool): If true and more than 1 value per subject, the first is left. If false, 
+            ony subjects are left with exactly one value.
     Returns:
         subjects_df (pandas.DataFrame)
     '''
@@ -120,7 +164,7 @@ def add_subject_vars(subjects_df, table_path, vars=[], leave_first=False):
             if len(values) == 1:
                 new_row.append(values[0])
             else:
-                if leave_first:
+                if leave_first and len(values) > 1: 
                     new_row.append(values[0])
                 else:
                     new_row.append(None)
@@ -143,6 +187,7 @@ def add_event_vars(events_df, table_path, vars=[]):
         events_df (pandas.DataFrame)
     '''
     new_df = io.load_df(table_path, sep =',', cols=["src_subject_id", "eventname"]+vars)
+    new_df = new_df.groupby(["src_subject_id", "eventname"])[vars].mean()
     new_events_df = pd.merge(events_df, new_df, on=["src_subject_id", "eventname"])
     return new_events_df
 

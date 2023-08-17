@@ -12,11 +12,11 @@ def plot_correlations(df, columns, method='pearson', figsize=(10,8), annot=True)
     # Get correlations between variables with Pandas method
     corr_matrix = df.corr(method=method) 
 
-    # Get lower triangular correlation matrix (due to symmetri)
+    # Get lower triangular correlation matrix (due to symmetry)
     corr_matrix = corr_matrix.where(np.tril(np.ones(corr_matrix.shape)).astype(bool))
     
     # Plot heatmap
     plt.figure(figsize=figsize)
-    sns.heatmap(corr_matrix, cmap="mako", fmt='.1g', annot=annot)
+    sns.heatmap(corr_matrix, cmap="coolwarm", fmt='.1g', annot=annot)
     plt.tight_layout()
     return plt
