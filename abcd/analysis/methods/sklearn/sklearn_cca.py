@@ -27,7 +27,7 @@ def fit_cca(df, feature_columns, target_columns, nr_components=0):
         df["CC{}_X".format(dim+1)] = cc_x
         df["CC{}_Y".format(dim+1)] = cc_y
         corr = np.corrcoef(cc_x, cc_y)[0][1]
-        print("Covariate on dimension {0} has correlation {1:.2f}".format(dim+1, corr))
+        print("Covariate on dimension {0} has score {1:.2f} and correlation {2:.2f}".format(dim+1, cca_model.score(X, Y), corr))
     return cca_model, df
 
 def add_cca_covariates(df, cca_model, feature_columns, target_columns, nr_components=0):
@@ -46,4 +46,4 @@ def add_cca_covariates(df, cca_model, feature_columns, target_columns, nr_compon
         df["CC{}_X".format(dim+1)] = cc_x
         df["CC{}_Y".format(dim+1)] = cc_y
         corr = np.corrcoef(cc_x, cc_y)[0][1]
-        print("Covariate on dimension {0} has correlation {1:.2f}".format(dim+1, corr))
+        print("Covariate on dimension {0} has score {1:.2f} and correlation {2:.2f}".format(dim+1, cca_model.score(X, Y), corr))

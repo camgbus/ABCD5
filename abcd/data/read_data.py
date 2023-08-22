@@ -23,7 +23,7 @@ def get_subjects_events_visits(target_visits = ['baseline_year_1_arm_1', '2_year
         subjects_df = subjects_df[subjects_df['demo_comb_income_v2'].isin(VARS.VALUES['demo_comb_income_v2'].keys())] # Filtering our 777 and 999
         events_df = filter_events(subjects_df, events_df)
         # Adding per-visit CBCL scores
-        events_df = add_event_vars(events_df, VARS.CBCL_PATH, vars=list(VARS.CBCL_SCORES_t.keys()))
+        events_df = add_event_vars(events_df, VARS.CBCL_PATH, vars=list(VARS.CBCL_SCORES_t.keys())+list(VARS.CBCL_SCORES_raw.keys()))
         events_df = events_df.dropna() 
         subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, target_visits=target_visits)
         # Adding sleeping habits
@@ -101,7 +101,7 @@ def add_event_connectivity_scores(subjects_df, events_df):
     '''Add Resting state fMRI - Correlations (Gordon network). Filter subjects without connections.
     '''
     new_events_df = add_event_vars(events_df, VARS.fMRI_PATH, vars=list(VARS.NAMED_CONNECTIONS.keys()))
-    new_events_df = add_event_vars(events_df, VARS.fMRI_to_subcortical_PATH, vars=list(VARS.CONNECTIONS_C_SC.keys()))
+    new_events_df = add_event_vars(new_events_df, VARS.fMRI_to_subcortical_PATH, vars=list(VARS.CONNECTIONS_C_SC.keys()))
     new_events_df = new_events_df.dropna() 
     new_subjects_df = filter_subjects(subjects_df, new_events_df)
     return new_subjects_df, new_events_df
