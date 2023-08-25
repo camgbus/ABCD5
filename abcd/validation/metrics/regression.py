@@ -37,17 +37,29 @@ def median_absolute_error(y_true, y_pred):
     '''Median Absolute Error'''
     return metrics.median_absolute_error(y_true, y_pred)
 
-def translate_to_classes(y, class_labels, thresholds):
-    '''Translates regression predictions to class predictions given a list of thresholds and corresponding labels.
+def discretize(y, class_names, thresholds):
+    """
+    Translate regression predictions into class predictions.
+    Params:
+        y: list of floats
+        class_names: list of class labels
+        thresholds: list of bin thresholds. thresholds[i] is the lower bound of class i. thresholds[i+1] is the upper bound of class i.
+    Return: y_classes: list of class labels
+    """
+    assert len(class_names) + 1 == len(thresholds)
+    bin_indices = np.digitize(y, thresholds) - 1
+    bin_indices = np.clip(bin_indices, 0, len(class_names)-1) #account for values below the first threshold or above the last threshold
+    y_classes = [class_names[i] for i in bin_indices]
+    return y_classes
+
+def accuracy(y_true, y_pred, class_names, thresholds):
+    '''Accuracy after translating predictions to classes
 
     Params:
-        y: numpy aray of shape (n, 1)
+        y_true, y_pred: List
         class_labels: list of class labels
         thresholds: list of thresholds corresponding to each class. thresholds[i] is the lower bound of class i.
-    Returns y_classes: numpy array of shape (n, 1) with class labels
     '''
-    assert len(class_labels) == len(thresholds)
-    y_classes = np.zeros(y.shape)
-    for i, threshold in enumerate(thresholds):
-        y_classes[y >= threshold] = class_labels[i]
-    return y_classes
+    y_pred_classes = discretize(y_pred, class_names, thresholds)
+    y_true_classes = discretize(y_true, class_names, thresholds)
+    return metrics.accuracy_score(y_true_classes, y_pred_classes)

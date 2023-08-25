@@ -15,7 +15,7 @@ class MLPRegressor(Model):
 
         self.linear_layers = None #will be populated by children models
 
-        self.sigmoid = nn.Sigmoid() #oupout range is (0, 1)
+        self.sigmoid = nn.Sigmoid() #output range is (0, 1)
     
     def forward(self, x):
         '''Forward pass for MLP regression model'''
@@ -31,22 +31,20 @@ class MLPRegressor(Model):
             return pred.detach()
         
 
-"MLP Regressor which customizes architecture based on parameters"
+"MLP Regressor with customizable architecture based on parameters"
 class MLPRegressorCustom(MLPRegressor):
     """
     Series of linear layers followed by ReLU activations, with the final layer having a sigmoid activation.
     """
-    def __init__(self, num_layers, hidden_sizes, *args, **kwargs):
+    def __init__(self, hidden_sizes, *args, **kwargs):
         super(MLPRegressorCustom, self).__init__(*args, **kwargs)
-        self.num_layers = num_layers
         self.hidden_sizes = hidden_sizes
-
-        assert self.num_layers == len(self.hidden_sizes) + 1
+        self.num_layers = len(hidden_sizes) + 1 #+1 for final layer
 
         #create layers
         layers = []
         curr_in_size = self.input_size
-        for i in range(num_layers-1):
+        for i in range(self.num_layers-1):
             curr_out_size = self.hidden_sizes[i]
             layers.append(nn.Linear(curr_in_size, curr_out_size))
             layers.append(nn.ReLU())
@@ -75,39 +73,4 @@ class LinearRegressor(MLPRegressor):
         if self.linear1.bias is not None:
             self.linear1.bias.data.zero_() #initialize bias to 0
         
-        #self.linear_layers = self.linear1
         self.linear_layers = self.linear1
-
-
-"MLP Regressor with 3 Layers"
-class MLPRegressor3(MLPRegressor):
-    def __init__(self, hidden_sizes=[256, 64], *args, **kwargs):
-        super(MLPRegressor3, self).__init__(*args, **kwargs)
-
-        self.hidden_sizes = hidden_sizes
-
-        # Three linear layers
-        self.linear1 = nn.Linear(self.input_size, self.hidden_sizes[0])
-        self.linear2 = nn.Linear(self.hidden_sizes[0], self.hidden_sizes[1])
-        self.linear3 = nn.Linear(self.hidden_sizes[1], self.output_size)
-
-        # Apply Xavier uniform initialization to the weights of the linear layers
-        init.xavier_uniform_(self.linear1.weight)
-        init.xavier_uniform_(self.linear2.weight)
-        init.xavier_uniform_(self.linear3.weight)
-
-        # Initialize biases to 0
-        if self.linear1.bias is not None:
-            self.linear1.bias.data.zero_()
-        if self.linear2.bias is not None:
-            self.linear2.bias.data.zero_()
-        if self.linear3.bias is not None:
-            self.linear3.bias.data.zero_()
-
-        self.linear_layers = nn.Sequential(
-            self.linear1,
-            nn.ReLU(),
-            self.linear2,
-            nn.ReLU(),
-            self.linear3
-        )
