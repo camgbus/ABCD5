@@ -43,13 +43,17 @@ def discretize(y, class_names, thresholds):
     Params:
         y: list of floats
         class_names: list of class labels
-        thresholds: list of bin thresholds. thresholds[i] is the lower bound of class i. thresholds[i+1] is the upper bound of class i.
+        thresholds: list of bin thresholds. thresholds[i] is the upper bound of class i. thresholds[i+1] is the upper bound of class i.
     Return: y_classes: list of class labels
     """
     assert len(class_names) + 1 == len(thresholds)
     bin_indices = np.digitize(y, thresholds) - 1
     bin_indices = np.clip(bin_indices, 0, len(class_names)-1) #account for values below the first threshold or above the last threshold
     y_classes = [class_names[i] for i in bin_indices]
+    # print("\nDiscretized predictions:")
+    # print("thresholds: {}".format(thresholds))
+    # print("y: {}".format(y))
+    # print("y_classes: {}".format(y_classes))
     return y_classes
 
 def accuracy(y_true, y_pred, class_names, thresholds):

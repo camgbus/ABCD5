@@ -20,7 +20,7 @@ class RegressorTrainer(Trainer):
         """
         self.class_names = class_names #List[str] e.g. ['male', 'female']
         self.thresholds = thresholds #List[float] e.g. [0.0, 0.5, 1.0]
-        self.discretizing = class_names and thresholds
+        self.discretizing = bool(class_names and thresholds)
 
         super(RegressorTrainer, self).__init__(trainer_path, device, optimizer, loss_f, metrics, seed)
 
@@ -69,7 +69,7 @@ class RegressorTrainer(Trainer):
             if self.discretizing:
                 discretized_predictions = discretize(predictions, self.class_names, self.thresholds)
                 discretized_targets = discretize(targets, self.class_names, self.thresholds)
-                cm = confusion_matrix(discretized_targets, discretized_predictions, nr_labels=len(self.class_names))
+                cm = confusion_matrix(discretized_targets, discretized_predictions)
                 cms[dataloader_name] = cm
 
             # Summarize values into progress for printing progress and updating best model
