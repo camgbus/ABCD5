@@ -36,18 +36,20 @@ class MLPRegressorCustom(MLPRegressor):
     """
     Series of linear layers followed by ReLU activations, with the final layer having a sigmoid activation.
     """
-    def __init__(self, hidden_sizes, *args, **kwargs):
+    def __init__(self, hidden_sizes, dropout_p=0.0, *args, **kwargs):
         super(MLPRegressorCustom, self).__init__(*args, **kwargs)
         self.hidden_sizes = hidden_sizes
         self.num_layers = len(hidden_sizes) + 1 #+1 for final layer
+        self.dropout_p = dropout_p
 
         #create layers
         layers = []
         curr_in_size = self.input_size
-        for i in range(self.num_layers-1):
+        for i in range(self.num_layers-1): # linear -> ReLU -> dropout
             curr_out_size = self.hidden_sizes[i]
             layers.append(nn.Linear(curr_in_size, curr_out_size))
             layers.append(nn.ReLU())
+            layers.append(nn.Dropout(p=self.dropout_p))
             curr_in_size = curr_out_size
         layers.append(nn.Linear(curr_in_size, self.output_size)) #final layer
 
