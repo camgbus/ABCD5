@@ -106,6 +106,23 @@ NETWORK_NAMES_ASAG = OrderedDict([("au","auditory"),
             ("vta","ventral attention"),
             ("vs","visual")])
 
+#translate from NETWORK_NAMES_ASAG key to NETWORK key
+NETWORK_NAMES_ASAG_to_NETWORK = {
+    "au": "ad",
+    "cerc": "cgc",
+    "copa": "ca",
+    "df": "dt",
+    "dsa": "dla",
+    "fopa": "fo",
+    "none": "n",
+    "rst": "rspltp",
+    "sa": "sa",
+    "smh": "smh",
+    "smm": "smm",
+    "vta": "vta",
+    "vs": "vs"
+}
+
 SUBCORTICAL = OrderedDict([("aalh","left accumbens area"),
             ("aarh","right accumbens area"),
             ("aglh"," left amygdala"),
