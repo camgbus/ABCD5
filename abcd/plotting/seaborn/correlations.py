@@ -17,6 +17,6 @@ def plot_correlations(df, columns, method='pearson', figsize=(10,8), annot=True)
     
     # Plot heatmap
     plt.figure(figsize=figsize)
-    sns.heatmap(corr_matrix, cmap="coolwarm", fmt='.1g', annot=annot)
+    sns.heatmap(corr_matrix, cmap="vlag", fmt='.1g', annot=annot)
     plt.tight_layout()
     return plt

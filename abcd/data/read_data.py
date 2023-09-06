@@ -8,16 +8,16 @@ import abcd.utils.io as io
 from abcd.local.paths import core_path, output_path
 import abcd.data.VARS as VARS
 
-def get_subjects_events_visits(target_visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1']):
-    name_suffix = '-'.join([v[0] for v in target_visits])
+def get_subjects_events_visits(visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1']):
+    name_suffix = '-'.join([v[0] for v in visits])
     try:
         subjects_df = io.load_df(output_path, "subjects_{}".format(name_suffix))
         events_df = io.load_df(output_path, "events_{}".format(name_suffix))
-    except:
+    except Exception:
         subjects_df, events_df = get_subjects_events_sf()
-        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, target_visits = target_visits)
+        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, visits = visits)
         # Adding per-subject NIH Neurocognition scores
-        subjects_df = add_subject_vars(subjects_df, VARS.NIH_PATH, vars=list(VARS.NIH_TESTS_uncorrected.keys()), leave_first=True)
+        subjects_df = add_subject_vars(subjects_df, VARS.NIH_PATH, vars=list(VARS.NIH_TESTS_uncorrected.keys()) + list(VARS.NIH_COMBINED_uncorrected.keys()), leave_first=True)
         # Adding per-subject household income information
         subjects_df = add_subject_vars(subjects_df, VARS.DEMO_PATH, vars=["demo_comb_income_v2"], leave_first=True)
         subjects_df = subjects_df[subjects_df['demo_comb_income_v2'].isin(VARS.VALUES['demo_comb_income_v2'].keys())] # Filtering our 777 and 999
@@ -25,11 +25,11 @@ def get_subjects_events_visits(target_visits = ['baseline_year_1_arm_1', '2_year
         # Adding per-visit CBCL scores
         events_df = add_event_vars(events_df, VARS.CBCL_PATH, vars=list(VARS.CBCL_SCORES_t.keys())+list(VARS.CBCL_SCORES_raw.keys()))
         events_df = events_df.dropna() 
-        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, target_visits=target_visits)
+        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, visits=visits)
         # Adding sleeping habits
         events_df = add_event_vars(events_df, VARS.SLEEP_PATHS['sleepdisturb1_p'], vars=['sleepdisturb1_p', 'sleepdisturb2_p'])
         events_df = events_df.dropna() 
-        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, target_visits=target_visits)
+        subjects_df, events_df = filter_df_by_visits(subjects_df, events_df, visits=visits)
         io.dump_df(subjects_df, output_path, "subjects_{}".format(name_suffix))
         io.dump_df(events_df, output_path, "events_{}".format(name_suffix))
     return subjects_df, events_df
@@ -82,19 +82,19 @@ def get_subjects_events():
         io.dump_df(events_df, output_path, "events_fmri")
     return subjects_df, events_df
 
-def filter_df_by_visits(subjects_df, events_df, target_visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1']):
+def filter_df_by_visits(subjects_df, events_df, visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1']):
     '''Leave only subjects for which there is data for all the specified visits
     '''
     complete_subjects = []
     for subject_id in tqdm(set(events_df['src_subject_id'])):
         subject_events_df = events_df.loc[(events_df['src_subject_id'] == subject_id)]
         eventnames = set(subject_events_df['eventname'])
-        if all([x in eventnames for x in target_visits]):
+        if all([x in eventnames for x in visits]):
             complete_subjects.append(subject_id)
     complete_events_df = events_df[events_df['src_subject_id'].isin(complete_subjects)]
-    complete_events_df = complete_events_df[complete_events_df['eventname'].isin(target_visits)]
+    complete_events_df = complete_events_df[complete_events_df['eventname'].isin(visits)]
     complete_subjects_df = filter_subjects(subjects_df, complete_events_df)
-    assert len(complete_events_df) == len(target_visits)*len(complete_subjects_df)
+    assert len(complete_events_df) == len(visits)*len(complete_subjects_df)
     return complete_subjects_df, complete_events_df
     
 def add_event_connectivity_scores(subjects_df, events_df):

@@ -2,6 +2,12 @@
 """
 import pygal
 from abcd.data.var_tailoring.discretization import boundaries_by_frequency, boundaries_by_range
+from abcd.plotting.pygal.colors import palette
+
+custom_style = pygal.style.Style(
+    colors=tuple(sorted(list(palette.values())))
+    #,background='transparent'
+    )
 
 def pyramid_histogram(df, y, hue, nr_bins = 5, title = None):
     '''Generate a pyramid plot with the distribution of a variable, grouped according to another.
@@ -35,3 +41,15 @@ def pyramid_histogram(df, y, hue, nr_bins = 5, title = None):
                         (dfs[group_key][y] < boundaries[ix+1])]) for ix in range(len(boundaries)-1)]
         plot.add(group_key, frequancies)
     return plot   
+
+def scatter(dfs, x, y, title = None):
+    '''For each target, plot the ground truth in the x axis and the prediction as y'''    
+    plot = pygal.XY(stroke=False)  #, style=custom_style)
+    if title:
+        plot.title = title
+    #plot.x_title = x
+    #plot.y_title = y
+    for df_name, df in dfs.items():
+        plot.add(df_name, list(zip(df[x], df[y])))
+    return plot  
+    

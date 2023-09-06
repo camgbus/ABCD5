@@ -8,6 +8,12 @@ from abcd.training.Trainer import Trainer
 from abcd.validation.metrics.classification import confusion_matrix, balanced_accuracy, f1
 from abcd.plotting.seaborn.confusion_matrix import plot_confusion_matrix
 from abcd.plotting.seaborn.rendering import save
+SEED = 0
+torch.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
 
 METRICS = {"B-Acc.": balanced_accuracy, "F1": f1}
 

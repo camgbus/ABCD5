@@ -11,23 +11,27 @@ import abcd.utils.io as io
 from abcd.data.read_data import get_subjects_events, get_subjects_events_visits
 from abcd.local.paths import output_path
 
-SITES = ["site{:02d}".format(nr_id) for nr_id in range(1, 22)]
+SITES = [f"site{nr_id:02d}" for nr_id in range(1, 22)]
 
-def save_restore_visit_splits(target_visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1'], k=5, seed=0):
-    name = "splits_{}_{}_{}".format('-'.join([v[0] for v in target_visits]), k, seed)
+def save_restore_visit_splits(visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1'], k=5, seed=0):
+    '''Restore splits for subjects with the specified visits.
+    '''
+    name = f"splits_{'-'.join([v[0] for v in visits])}_{k}_{seed}"
     try:
         splits = io.load_json(output_path, name)
-    except:
-        subjects_df, _ = get_subjects_events_visits(target_visits=target_visits)
+    except IOError:
+        subjects_df, _ = get_subjects_events_visits(visits=visits)
         splits = inter_site_splits(subjects_df, k=k, seed=seed)
         io.dump_json(splits, output_path, name)
     return splits
     
 def save_restore_sex_fmri_splits(k=5, seed=0):
-    name = "splits_sex_fmri_{}_{}".format(k, seed)
+    '''Restore splits for subjects with functional imaging visits.
+    '''
+    name = f"splits_sex_fmri_{k}_{seed}"
     try:
         splits = io.load_json(output_path, name)
-    except:
+    except IOError:
         subjects_df, _ = get_subjects_events()
         splits = inter_site_splits(subjects_df, k=k, seed=seed)
         io.dump_json(splits, output_path, name)

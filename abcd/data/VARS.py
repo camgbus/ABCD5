@@ -38,6 +38,7 @@ NIH_VARIATIONS = {"_uncorrected": "Uncorrected Standard Score",
                   "_fc": "Fully-Corrected T-score"}
 
 NIH_TESTS_uncorrected = {key+"_uncorrected": val for key, val in NIH_TESTS.items()}
+NIH_COMBINED_uncorrected = {key+"_uncorrected": val for key, val in NIH_COMBINED_SCORES.items()}
 
 
 ### --- CBCL behavior questionnaire --- ###
@@ -48,6 +49,7 @@ CBCL_SCORES_t = {"cbcl_scr_syn_anxdep_t": "Anxious/Dep.",
              "cbcl_scr_syn_withdep_t": "Depression",
              "cbcl_scr_syn_somatic_t": "Somatic",
              "cbcl_scr_syn_social_t": "Social",
+             "cbcl_scr_syn_thought_t": "Thought",
              "cbcl_scr_syn_attention_t": "Attention",
              "cbcl_scr_syn_rulebreak_t": "Rule-breaking",
              "cbcl_scr_syn_aggressive_t": "Aggressive",
@@ -58,11 +60,13 @@ CBCL_SCORES_raw = {"cbcl_scr_syn_anxdep_r": "Anxious/Dep.",
              "cbcl_scr_syn_withdep_r": "Depression",
              "cbcl_scr_syn_somatic_r": "Somatic",
              "cbcl_scr_syn_social_r": "Social",
+             "cbcl_scr_syn_thought_r": "Thought",
              "cbcl_scr_syn_attention_r": "Attention",
              "cbcl_scr_syn_rulebreak_r": "Rule-breaking",
              "cbcl_scr_syn_aggressive_r": "Aggressive",
              "cbcl_scr_syn_internal_r": "Internalizing",
              "cbcl_scr_syn_external_r": "Externalizing"}   
+CBCL_colors = ('#5D6BBF', '#2E9E99', '#469867', '#CFA38B', '#969696', '#7D5A98', '#A80532', '#AC4436')
 
 
 ### --- Resting state fMRI connectivity scores --- ###
@@ -70,17 +74,17 @@ CBCL_SCORES_raw = {"cbcl_scr_syn_anxdep_r": "Anxious/Dep.",
 fMRI_PATH = os.path.join(core_path, "imaging", "mri_y_rsfmr_cor_gp_gp.csv")
 
 NETWORKS = OrderedDict([("ad","auditory"),
-            ("cgc","cingulo-opercular"),
-            ("ca","cingulo-parietal"),
+            ("cgc","cing. opercular"),
+            ("ca","cing. parietal"),
             ("dt","default"),
-            ("dla","dorsal attention"),
+            ("dla","dorsal att."),
             ("fo","fronto parietal"),
             ("n","none"),
-            ("rspltp","retrosplenial temporal"),
+            ("rspltp","retrospl. temp."),
             ("sa","salience"),
-            ("smh","sensorimotor hand"),
-            ("smm","sensorimotor mouth"),
-            ("vta","ventral attention"),
+            ("smh","sensorimr. hand"),
+            ("smm","sensorimr. mouth"),
+            ("vta","ventral att."),
             ("vs","visual")])
 
 # All connection columns have the shape rsfmri_c_ngd_<Network A>_ngd_<Network B>
