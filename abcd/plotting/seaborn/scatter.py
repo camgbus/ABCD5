@@ -37,3 +37,19 @@ def plot_jointplot(df, x_col, y_col, hue_col, figsize=(10, 10), palette=None, re
     add_text(plot, text_labels)
     plt.legend(title=hue_col, loc='upper right', bbox_to_anchor=(1.45, 1.2))
     return plt
+
+def plot_regression_scatter(predictions, targets, figsize=(10, 10), title=None):
+    """
+    Plot a scatter plot of predictions vs targets. Called by RegressorTrainer.
+    """
+    plt.figure(figsize=figsize)
+    sns.scatterplot(x=targets, y=predictions)
+    max_val = max(max(predictions), max(targets))
+    min_val = min(min(predictions), min(targets))
+    plt.plot([min_val, max_val], [min_val, max_val], '--', color='red')
+    plt.xlabel("True Values")
+    plt.ylabel("Predictions")
+    if title:
+        plt.title(title)
+    plt.tight_layout()
+    return plt
