@@ -130,6 +130,17 @@ def subject_cols_to_events(subjects_df, events_df, columns):
     events_df = pd.merge(events_df, subjects_df[['src_subject_id'] + columns], on='src_subject_id', how='left')
     return events_df
 
+def event_cols_to_subjects(subjects_df, events_df, columns, visits = ['baseline_year_1_arm_1', '2_year_follow_up_y_arm_1']):
+    '''Add columns from the events dataframe into the subject one, succeding the column with the 
+    visit name'''
+    for visit in visits:
+        visit_events_df = events_df[events_df['eventname'] == visit] 
+        assert len(subjects_df) == len(visit_events_df)
+        subjects_df = pd.merge(subjects_df, visit_events_df[['src_subject_id']+columns], on='src_subject_id')
+        # Add visit name suffix
+        subjects_df = subjects_df.rename(columns={col: col+'_'+visit for col in columns})
+    return subjects_df
+
 def filter_subjects(subjects_df, events_df):
     '''Filter subjects for which there are no events'''
     return subjects_df[subjects_df.apply(lambda x: 
